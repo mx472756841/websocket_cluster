@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Chat</title>
+    <script type="application/javascript" src="/static/js/jquery-2.1.1.js"></script>
+    <script type="application/javascript">
+
+        $(document).ready(function () {
+            $("input[name='nick']").focus(function () {
+                $("#msg").text("");
+            });
+            $("input[name='room']").focus(function () {
+                $("#msg").text("");
+            });
+
+            $("#btn").click(function () {
+                var nick = $("input[name='nick']").val();
+                var room = $("input[name='room']").val();
+                window.location = '/?room=' + room + '&nick=' + nick;
+            });
+        });
+    </script>
+</head>
+<body>
+<form>
+    <p>
+        room:<input type="text" name="room">
+    </p>
+    <p>
+        nick:<input type="text" name="nick"> <input type="button" value="post" id="btn">
+    </p>
+    <div id="msg"></div>
+</form>
+</body>
+</html>

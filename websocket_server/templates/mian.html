@@ -1,0 +1,151 @@
+<html>
+<head>
+    <title>WebSocket Chat</title>
+    <script type="application/javascript" src="/static/js/jquery-2.1.1.js"></script>
+    <script type="application/javascript">
+        $(document).ready(function () {
+            // 初始化做websocket连接
+            var ws;
+            if (!window.WebSocket) {
+                // 兼容浏览器
+                window.WebSocket = window.MozWebSocket;
+            }
+
+            if (window.WebSocket) {
+                ws = new WebSocket("ws://" + window.location.host + "/wss/chat");
+
+                // 关闭连接
+                ws.onclose = function () {
+                    console.log("Socket closed");
+                };
+
+                // 打开连接
+                ws.onopen = function () {
+                    console.log("Socket opened");
+                };
+
+                // 连接出错
+                ws.onerror = function () {
+                    console.log("Socket error");
+                };
+
+                // 处理信息
+                ws.onmessage = function (event) {
+                    var data = $.parseJSON(event.data);
+                    if (data.msg_type == 'join') {
+                        $("#Content-Left").append(
+                            "<ul><b style='color:lawngreen'>" + data.nick + " " + data.msg + "</b></ul>"
+                        );
+                    } else if (data.msg_type == 'leave') {
+                        $("#Content-Left").append(
+                            "<ul><b style='color:red'>" + data.nick + " " + data.msg + "</b></ul>"
+                        );
+                    } else if (data.msg_type == 'nicks') {
+                        $("#Content-Right").empty();
+                        $.each(data.nicks, function (index, element) {
+                            var tmp_ul = element == data.nick ? "<ul><b>" + element + "</b></ul>" : "<ul>" + element + "</ul>";
+                            $("#Content-Right").append(tmp_ul);
+                        });
+                    } else {
+                        $("#Content-Left").append(
+                            "<ul><b>" + data.nick + " : " + data.msg + "</b></ul>"
+                        );
+                    }
+                    $("#Content-Left").scrollTop($("#Content-Left")[0].scrollHeight + 100);
+                }
+            } else {
+                window.location = "/drop";
+                console.log("Your browser does not support Web Socket.");
+            }
+
+            $(window).bind('beforeunload', function () {
+                ws.close()
+            });
+
+            $("input[name='post']").click(submit_msg);
+            $("input[name='message']").keyup(function (event) {
+                if (event.which == 13) {
+                    submit_msg();
+                }
+
+            });
+
+            function submit_msg() {
+                var message;
+                message = $("input[name='message']").val();
+                if (message == '') {
+                    return
+                }
+                var msg_data = {
+                    'type': 'message',
+                    'data': {
+                        "message": message
+                    }
+                }
+                $("input[name='message']").val("");
+                $("input[name='message']").focus();
+                jmsg = JSON.stringify(msg_data);
+                ws.send(jmsg);
+            }
+        });
+    </script>
+
+    <style type="text/css">
+        #Container {
+            /*width: 800px;*/
+            margin: 0 auto; /*设置整个容器在浏览器中水平居中*/
+        }
+
+        #Header {
+            height: 20px;
+        }
+
+        #Content {
+            height: 300px;
+            margin-top: 20px; /*此处讲解margin的用法，设置content与上面header元素之间的距离*/
+
+        }
+
+        #Content-Left {
+            height: 300px;
+            width: 500px;
+            float: left; /*设置浮动，实现多列效果，div+Css布局中很重要的*/
+            border: 1px solid #020202;
+            overflow: scroll;
+        }
+
+        #Content-Right {
+            height: 300px;
+            width: 200px;
+            float: left; /*设置浮动，实现多列效果，div+Css布局中很重要的*/
+        }
+
+        /*注：Content-Left和Content-Main元素是Content元素的子元素，两个元素使用了float:left;设置成两列，这个两个元素的宽度和这个两个元素设置的padding、margin的和一定不能大于父层Content元素的宽度，否则设置列将失败*/
+        #Footer {
+            height: 40px;
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+
+<body>
+<div id="Container">
+    <div id="Header">
+        <h3>Room : {{ room_name }}</h3>
+    </div>
+    <div id="Content">
+        <div id="Content-Left">
+        </div>
+        <div id="Content-Right">
+        </div>
+    </div>
+    <div id="Footer">
+        <input type="text" name="message" value="" style="width: 350px"/>
+        <input type="button" name="post" value="Post"/>
+    </div>
+</div>
+
+</body>
+
+</html>

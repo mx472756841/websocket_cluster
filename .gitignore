@@ -102,3 +102,8 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# ignore pycharm .idea dirs
+.idea
+etc
+logs
